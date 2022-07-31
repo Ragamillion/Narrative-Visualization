@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<html>
+<head>
+<title>SN Assignment</title>
+</head>
+
+<body>
+
+    <!-- Menu section -->
+    <div id="Step1" class="container-fluid" style="height:300px">
+
+            <p>
+                <h1>3.  Percentage of Female employees in Labor Force</h1>
+                This scene shows the percentage of women in the labor force from 1990 - 2021<br/><br/>
+				The chart below is for Japan where the trend is once again impacted in 2020 but has since bounced back<br/>
+				If you explore the other countries below, the trend is the same; a small disruption during the pandemic and bounce back since then.<br/><br/>
+				
+				<b>Conclusion:</b> The percentage of female employees around the world had taken a dip in 2020, but has since then <b>bounced back </b>stronger than ever.<br/>
+				In the future, this trend will continue to increase as for many of us around the world, it has been a <b>lesson to save for a rainy day</b>.<br/>
+				<br/>
+                Feel free to <b>explore</b> other countries by clicking on the buttons below.<br/>
+                
+            </p>
+			<p></p>
+            <div><a href=Index.html><b>START Again</b></a></div>
+	
+	<p></p>
+    <button onclick="populate('Japan')">Japan</button>
+	<button onclick="populate('Yemen')">Yemen</button>
+	<button onclick="populate('Israel')">Israel</button>
+	<button onclick="populate('Nepal')">Nepal</button>
+	<button onclick="populate('China')">China</button>
+	<button onclick="populate('Sudan')">Sudan</button>
+</div>
+
+</body>
+
+<script src="https://d3js.org/d3.v4.js"></script>
+
+<div id="my_dataviz"></div>
+
+<script>
+
+var margin = {top: 10, right: 30, bottom: 30, left: 60},
+    width = 700 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+var svg = d3.select("#my_dataviz")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right + 100)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+function populate(country) {
+	var datafile = "https://ragamillion.github.io/Narrative-Visualization/" + country + "_LaborForce.csv";
+	
+	svg.selectAll("path").remove();
+	svg.selectAll("circle").remove();
+	svg.selectAll("text").remove();
+	svg.selectAll("line").remove();
+	svg.append("text").attr("text-anchor", "middle").attr("x",width/2).attr("y",20).text(country).style("font-size","24px");
+	svg.append("text").attr("text-anchor", "right").attr("x",width-60).attr("y",20).text("Pandemic").style('fill','red');	
+
+		  
+d3.csv(datafile,
+
+  function(data) {
+  
+	var annObj = data.find(function(obj) {
+		if (obj.Year == 2020) {
+			return 1;
+		} else {
+			return 0;
+		}
+	});
+  
+	var x = d3.scaleLinear()
+      .domain(d3.extent(data, function(d) { return d.Year; }))
+      .range([ 0, width ]);
+    svg.append("g")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x).tickFormat(d3.format("d")));
+
+    var y = d3.scaleLinear()
+      .domain([0, 100])
+      .range([ height, 0 ]);
+    svg.append("g")
+      .call(d3.axisLeft(y));
+
+	var bisect = d3.bisector(function(d) { return d.Year; }).left;
+
+	var focus = svg
+		.append('g')
+		.append('circle')
+			.style("fill", "none")
+			.attr("stroke", "black")
+			.attr('r', 8.5)
+			.style("opacity", 0);
+
+	var focusText = svg
+		.append('g')
+		.append('text')
+			.style("opacity", 0)
+			.attr("text-anchor", "left")
+			.attr("alignment-baseline", "middle");
+			
+	svg.append("path")
+      .datum(data)
+      .attr("fill", "none")
+      .attr("stroke", "steelblue")
+      .attr("stroke-width", 1.5)
+      .attr("d", d3.line()
+        .x(function(d) { return x(d.Year) })
+        .y(function(d) { return y(d.Data) })
+        );
+		
+	svg.append("circle")
+		.attr("cx",x(annObj.Year))
+		.attr("cy",y(annObj.Data))
+		.attr("r",5);
+	
+	svg.append("line")
+		.attr("x1",x(annObj.Year))
+		.attr("y1",30)
+		.attr("x2",x(annObj.Year))
+		.attr("y2",height)
+		.style("stroke", "blue")
+		.attr("stroke-width",.25);
+		
+	
+	svg.selectAll("myCircles")
+		.data(data)
+		.enter()
+		.append("circle")
+			.attr("fill","red")
+			.attr("stroke","none")
+			.attr("cx", function(d) { return x(d.Year) })
+			.attr("cy", function(d) { return y(d.Data) })
+			.attr("r", 2);
+
+	svg.append('rect')
+		.style("fill", "none")
+		.style("pointer-events", "all")
+		.attr('width', width)
+		.attr('height', height)
+		.on('mouseover', mouseover)
+		.on('mousemove', mousemove)
+		.on('mouseout', mouseout);
+
+	function mouseover() {
+		focus.style("opacity", 1)
+		focusText.style("opacity",1)
+	}
+
+	function mousemove() {
+		var x0 = x.invert(d3.mouse(this)[0]);
+		var i = bisect(data, x0, 1);
+		selectedData = data[i]
+		focus
+			.attr("cx", x(selectedData.Year))
+			.attr("cy", y(selectedData.Data))
+		focusText
+			.html(selectedData.Year + ": " + selectedData.Data)
+			.attr("x", x(selectedData.Year))
+			.attr("y", y(selectedData.Data)-20)
+    }
+	
+	function mouseout() {
+		focus.style("opacity", 0)
+		focusText.style("opacity", 0)
+	}
+	
+})
+};
+populate("Japan");
+</script>
+</html>
