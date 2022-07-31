@@ -1,6 +1,150 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
 <html>
-  <head><title>Title</title></head>
-  <body>
-    Hello World
-  </body>
+<head>
+<title>SN Assignment</title>
+</head>
+
+<body>
+
+    <!-- Menu section -->
+    <div id="Step1" class="container-fluid" style="height:300px">
+        <div>
+            <p>
+                <h1>1.  Percentage of Female employees in the total Labor Force - United States of America  </h1>
+                This scene shows the percentage of women among the total labor force in USA from 1990 - 2021<br/>
+                As you can see in the plot, the percentage appears to go up continuously with a break in the pattern in 2020.<br/><br/>
+                <i>Data used for the scene comes from WDI(World Bank) using pre-loaded CSV file.</i><br/>
+            </p>
+            <p><div id="to_step2"><a href=Lineplot2.html>See Next >>></a></div></p>
+        </div>
+    </div>
+
+</body>
+
+
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+
+ 
+ 
+<!-- Create a div where the graph will take place -->
+<div id="my_dataviz"></div>
+
+<script>
+
+// set the dimensions and margins of the graph
+var margin = {top: 10, right: 30, bottom: 30, left: 60},
+    width = 700 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+// append the svg object to the body of the page
+var svg = d3.select("#my_dataviz")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+//Read the data
+d3.csv("https://ragamillion.github.io/Narrative-Visualization/USA_LaborForce.csv",
+
+
+
+  // Now I can use this dataset:
+  function(data) {
+
+    // Add X axis --> it is a date format
+//    var x = d3.scaleTime()
+	var x = d3.scaleLinear()
+      .domain(d3.extent(data, function(d) { return d.Year; }))
+      .range([ 0, width ]);
+    svg.append("g")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x).tickFormat(d3.format("d")));
+
+    // Add Y axis
+    var y = d3.scaleLinear()
+      .domain([0, 100])
+      .range([ height, 0 ]);
+    svg.append("g")
+      .call(d3.axisLeft(y));
+	  
+	var bisect = d3.bisector(function(d) { return d.Year; }).left;
+
+	var focus = svg
+		.append('g')
+		.append('circle')
+			.style("fill", "none")
+			.attr("stroke", "black")
+			.attr('r', 8.5)
+			.style("opacity", 0);
+
+	var focusText = svg
+		.append('g')
+		.append('text')
+			.style("opacity", 0)
+			.attr("text-anchor", "left")
+			.attr("alignment-baseline", "middle");
+
+    // Add the line
+    svg.append("path")
+      .datum(data)
+      .attr("fill", "none")
+      .attr("stroke", "steelblue")
+      .attr("stroke-width", 1.5)
+      .attr("d", d3.line()
+        .x(function(d) { return x(d.Year) })
+        .y(function(d) { return y(d.Data) })
+        );
+		
+	svg.selectAll("myCircles")
+		.data(data)
+		.enter()
+		.append("circle")
+			.attr("fill","red")
+			.attr("stroke","none")
+			.attr("cx", function(d) { return x(d.Year) })
+			.attr("cy", function(d) { return y(d.Data) })
+			.attr("r", 2);
+
+	svg.append('rect')
+		.style("fill", "none")
+		.style("pointer-events", "all")
+		.attr('width', width)
+		.attr('height', height)
+		.on('mouseover', mouseover)
+		.on('mousemove', mousemove)
+		.on('mouseout', mouseout);
+
+	function mouseover() {
+		focus.style("opacity", 1)
+		focusText.style("opacity",1)
+	}
+
+	function mousemove() {
+		// recover coordinate we need
+		var x0 = x.invert(d3.mouse(this)[0]);
+		var i = bisect(data, x0, 1);
+		selectedData = data[i]
+		focus
+			.attr("cx", x(selectedData.Year))
+			.attr("cy", y(selectedData.Data))
+		focusText
+			.html(selectedData.Year + ": " + selectedData.Data)
+			.attr("x", x(selectedData.Year))
+			.attr("y", y(selectedData.Data)-20)
+    }
+	
+	function mouseout() {
+		focus.style("opacity", 0)
+		focusText.style("opacity", 0)
+	}
+	
+})
+
+</script>
 </html>
